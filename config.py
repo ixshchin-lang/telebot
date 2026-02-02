@@ -5,7 +5,7 @@ import pandas as pd
 import os
 
 # КОНФИГУРАЦИЯ
-TOKEN = "8405905845:AAHZTOQkTF1E82b8TGBgKNkE-GNInd6E684"
+TOKEN = ""
 ADMIN_PASSWORD = "2002"
 FAMILY_FILE = "data/key_family.csv"
 WOMEN_FILE = "data/status_women.csv"
