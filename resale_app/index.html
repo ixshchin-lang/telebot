@@ -1,0 +1,591 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Перекуп">
+<meta name="theme-color" content="#EDEFF2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101216" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<style>[hidden]{display:none!important}img{max-width:100%}</style>
+<title>Перекуп 1000</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Onest:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: iOS-style single column app, bottom tab bar, cards only for products; numbers in mono like a shipping waybill */
+:root{
+  --bg:#EDEFF2; --surface:#FFFFFF; --ink:#15181D; --muted:#5D6573; --line:#D5D9E0;
+  --accent:#D9381E; --accent-soft:#FBE6E1; --good:#1F8A4C; --good-soft:#E1F3E8; --warn:#B7791F; --warn-soft:#FBF0DC; --bad:#B42318; --bad-soft:#FCE4E2;
+  --f-display:"Unbounded",system-ui,sans-serif; --f-body:"Onest",-apple-system,system-ui,sans-serif; --f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --tab-h:64px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#101216; --surface:#1A1D23; --ink:#EEF0F3; --muted:#9AA2AF; --line:#2C313A;
+  --accent:#FF5A3C; --accent-soft:#3A1E18; --good:#3FC17A; --good-soft:#15301F; --warn:#E3A93F; --warn-soft:#33270F; --bad:#FF6B5E; --bad-soft:#3A1A17; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#101216; --surface:#1A1D23; --ink:#EEF0F3; --muted:#9AA2AF; --line:#2C313A;
+  --accent:#FF5A3C; --accent-soft:#3A1E18; --good:#3FC17A; --good-soft:#15301F; --warn:#E3A93F; --warn-soft:#33270F; --bad:#FF6B5E; --bad-soft:#3A1A17; color-scheme:dark}
+:root{padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+html,body{background:var(--bg)}
+body{margin:0;color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:10}
+.wrap{max-width:640px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px calc(var(--tab-h) + env(safe-area-inset-bottom,0px) + 24px)}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:26px;font-weight:700;line-height:1.15}
+h2{font-size:18px;font-weight:700}
+h3{font-size:15px;font-weight:500}
+p{margin:0}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.eyebrow{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.stack{display:flex;flex-direction:column;gap:12px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.between{justify-content:space-between}
+section.view{display:flex;flex-direction:column;gap:18px}
+
+/* header */
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;padding-top:8px}
+.wallet{font-family:var(--f-mono);font-size:13px;border:1.5px dashed var(--line);border-radius:10px;padding:6px 10px;text-align:right;white-space:nowrap}
+.wallet b{display:block;font-size:18px;color:var(--ink)}
+
+/* waybill strip */
+.waybill{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px}
+.waybill .city{font-family:var(--f-display);font-size:15px;font-weight:700}
+.waybill .route{height:2px;min-width:48px;background:repeating-linear-gradient(90deg,var(--accent) 0 6px,transparent 6px 11px)}
+.waybill .r{text-align:right}
+
+.note{font-size:13px;color:var(--muted);background:var(--surface);border-left:3px solid var(--warn);padding:10px 12px;border-radius:0 10px 10px 0}
+
+/* chips / segmented */
+.seg{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.seg::-webkit-scrollbar{display:none}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 12px;font:500 13px var(--f-body);white-space:nowrap;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* product card */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.card.banned{opacity:.85;border-style:dashed}
+.card-head{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:start}
+.rank{font-family:var(--f-display);font-size:13px;font-weight:700;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
+.score{font-family:var(--f-mono);font-size:20px;text-align:right;line-height:1}
+.score small{display:block;font-size:10px;color:var(--muted);font-family:var(--f-body);letter-spacing:.06em;text-transform:uppercase;margin-top:3px}
+.nums{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;border-top:1px dashed var(--line);border-bottom:1px dashed var(--line);padding:8px 0}
+.nums div{min-width:0}
+.nums span{display:block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.nums b{font-family:var(--f-mono);font-weight:500;font-size:14px}
+.pills{display:flex;gap:6px;flex-wrap:wrap}
+.pill{font-size:12px;padding:3px 8px;border-radius:6px;font-weight:500}
+.pill.good{background:var(--good-soft);color:var(--good)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.where{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:13px}
+.where dt{color:var(--muted)}
+.where dd{margin:0}
+.tip{font-size:13px}
+.linkbtn{align-self:flex-start;background:none;border:0;color:var(--accent);font:600 13px var(--f-body);padding:4px 0;cursor:pointer}
+
+/* plan */
+.alloc{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--line)}
+.alloc i{display:block;height:100%}
+.legend{display:grid;gap:8px}
+.legend .li{display:grid;grid-template-columns:12px 1fr auto;gap:10px;align-items:center;font-size:14px}
+.legend .sw{width:12px;height:12px;border-radius:3px}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px}
+.kpi span{display:block;font-size:11px;color:var(--muted)}
+.kpi b{font-family:var(--f-mono);font-size:18px;font-weight:500}
+.kpi b.pos{color:var(--good)}
+.bars{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;align-items:end;height:170px;padding-top:18px;border-bottom:1px solid var(--line)}
+.bar{position:relative;background:var(--accent);border-radius:6px 6px 0 0;min-height:4px}
+.bar:first-child{background:var(--muted)}
+.bar em{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);font:500 11px var(--f-mono);font-style:normal;white-space:nowrap;padding-bottom:3px;color:var(--ink)}
+.bar-labels{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;font-size:11px;color:var(--muted);text-align:center}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:12px}
+
+/* steps */
+ol.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:0;counter-reset:s}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:34px 1fr;gap:10px;padding-bottom:14px;position:relative}
+ol.steps li::before{content:counter(s);font:700 13px var(--f-display);width:28px;height:28px;border-radius:50%;border:1.5px solid var(--accent);color:var(--accent);display:grid;place-items:center;background:var(--bg);z-index:1}
+ol.steps li::after{content:"";position:absolute;left:13px;top:28px;bottom:0;border-left:1.5px dashed var(--line)}
+ol.steps li:last-child::after{display:none}
+ol.steps b{display:block}
+ol.steps p{font-size:14px;color:var(--muted)}
+
+/* forms */
+.form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field.full{grid-column:1/-1}
+label{font-size:12px;color:var(--muted);font-weight:500}
+input,select{font:500 16px var(--f-body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;min-width:0;-webkit-appearance:none;appearance:none}
+input[type=number]{font-family:var(--f-mono)}
+.btn{font:600 15px var(--f-body);border:0;border-radius:12px;padding:12px 16px;background:var(--accent);color:#fff;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.result{display:grid;grid-template-columns:1fr auto;gap:6px 12px;font-size:14px}
+.result b{font-family:var(--f-mono);font-weight:500;text-align:right}
+.result .big{font-size:22px}
+.verdict{padding:10px 12px;border-radius:10px;font-size:14px;font-weight:500}
+
+/* log */
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;font-weight:600;padding:6px 4px;border-bottom:1px solid var(--line)}
+td{padding:8px 4px;border-bottom:1px solid var(--line);vertical-align:top}
+td.n{text-align:right;font-family:var(--f-mono);white-space:nowrap}
+.tablebox{overflow-x:auto}
+.x{background:none;border:0;color:var(--muted);font-size:18px;cursor:pointer;padding:0 4px}
+.empty{text-align:center;color:var(--muted);padding:18px;border:1.5px dashed var(--line);border-radius:12px;font-size:14px}
+
+/* guide */
+details{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:0 14px}
+summary{cursor:pointer;padding:14px 0;font-weight:600;list-style:none;display:flex;justify-content:space-between;gap:10px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";font-family:var(--f-mono);color:var(--accent)}
+details[open] summary::after{content:"–"}
+details .body{padding-bottom:14px;display:flex;flex-direction:column;gap:10px;font-size:14px}
+details ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+
+/* tab bar */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+nav.tabs .in{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);height:var(--tab-h)}
+nav.tabs a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--muted);text-decoration:none;font-size:10.5px;font-weight:600}
+nav.tabs a svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+nav.tabs a[aria-current="page"]{color:var(--accent)}
+@media (prefers-reduced-motion:no-preference){.bar{transition:height .4s ease}}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Китай → Россия</div>
+      <h1 id="viewTitle">Анализ рынка</h1>
+    </div>
+    <div class="wallet"><span class="muted">в кассе</span><b id="walletVal">1 000 ₽</b></div>
+  </header>
+
+  <!-- ============ АНАЛИЗ ============ -->
+  <section class="view" id="v-analiz">
+    <div class="waybill">
+      <div><div class="eyebrow">Покупаем</div><div class="city">Китай</div><div class="muted" style="font-size:12px">AliExpress, Ozon/WB «из Китая»</div></div>
+      <div class="route" aria-hidden="true"></div>
+      <div class="r"><div class="eyebrow">Продаём</div><div class="city">Россия</div><div class="muted" style="font-size:12px">Авито, VK, Telegram, офлайн</div></div>
+    </div>
+    <p class="note">Цены — средние оценки по рынку на ноябрь 2026, с доставкой до ПВЗ. Перед заказом проверьте 5–10 объявлений на Авито в своём городе. Нажмите «Пересчитать», чтобы подставить свои цифры.</p>
+    <div class="seg" role="group" aria-label="Сортировка">
+      <button class="chip" data-sort="score" aria-pressed="true">По рейтингу</button>
+      <button class="chip" data-sort="roi" aria-pressed="false">По наценке</button>
+      <button class="chip" data-sort="risk" aria-pressed="false">Меньше риска</button>
+      <button class="chip" data-sort="speed" aria-pressed="false">Быстро продать</button>
+    </div>
+    <div class="stack" id="productList"></div>
+  </section>
+
+  <!-- ============ ПЛАН ============ -->
+  <section class="view" id="v-plan" hidden>
+    <p class="muted">Готовый план на стартовый бюджет. Деньги делим на 3 товара с низким риском и оставляем резерв на упаковку и непредвиденное.</p>
+    <div class="panel">
+      <div class="row between"><h2>Куда потратить</h2><span class="mono" id="planTotal"></span></div>
+      <div class="alloc" id="allocBar"></div>
+      <div class="legend" id="allocLegend"></div>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><span>Выручка</span><b id="kRev">0</b></div>
+      <div class="kpi"><span>Прибыль</span><b id="kProfit" class="pos">0</b></div>
+      <div class="kpi"><span>Срок цикла</span><b id="kDays">0</b></div>
+    </div>
+    <div class="panel">
+      <div class="row between"><h2>Если реинвестировать</h2><span class="muted" style="font-size:12px">капитал после цикла</span></div>
+      <div class="bars" id="bars"></div>
+      <div class="bar-labels" id="barLabels"></div>
+      <p class="muted" style="font-size:12px">Расчёт: за цикл продаётся <span id="stLabel">50</span>% партии, вся прибыль идёт в следующий заказ, 10% уходит на упаковку и мелочи. Покупателей в одном городе ограниченное число, поэтому в расчёте прибыль за цикл растёт не быстрее чем на 40%. Это ориентир, не обещание.</p>
+      <div class="field"><label for="sellThrough">Какую часть партии реально продать: <b id="stVal">50%</b></label><input type="range" id="sellThrough" min="30" max="100" step="5" value="50" style="padding:0;background:none;border:0"></div>
+    </div>
+    <div class="panel">
+      <h2>По шагам</h2>
+      <ol class="steps">
+        <li><div><b>День 1. Проверить спрос</b><p>Найдите каждый товар на Авито в своём городе. Посмотрите, сколько объявлений и по каким ценам. Если объявлений больше 200 и цены ниже наших — берите другой товар.</p></div></li>
+        <li><div><b>День 1–2. Заказать</b><p>AliExpress или раздел «Из Китая» на Ozon/WB. Берите продавцов с рейтингом от 4,8 и 1000+ отзывов, смотрите фото покупателей.</p></div></li>
+        <li><div><b>Неделя 1–3. Подготовить продажи</b><p>Пока едет посылка: создайте объявления с фото продавца, соберите предзаказы у знакомых и в чатах района.</p></div></li>
+        <li><div><b>Неделя 3–5. Продать</b><p>Сфотографируйте товар сами, обновите объявления, продавайте наборами («3 крабика за 300 ₽»). Наборы уходят быстрее штучных.</p></div></li>
+        <li><div><b>Дальше. Реинвестировать</b><p>Докупите то, что ушло быстрее всего. Отказывайтесь от того, что лежит дольше 2 недель. Записывайте каждую покупку и продажу во вкладке «Учёт».</p></div></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============ КАЛЬКУЛЯТОР ============ -->
+  <section class="view" id="v-calc" hidden>
+    <p class="muted">Посчитайте любой товар. Цены из карточек подставляются автоматически кнопкой «Пересчитать».</p>
+    <form class="panel" id="calcForm" autocomplete="off">
+      <div class="form">
+        <div class="field full"><label for="cName">Товар</label><input id="cName" value="Защитные стёкла 9H"></div>
+        <div class="field"><label for="cBudget">Бюджет, ₽</label><input id="cBudget" type="number" inputmode="decimal" value="1000"></div>
+        <div class="field"><label for="cBuy">Цена в Китае за шт, ₽</label><input id="cBuy" type="number" inputmode="decimal" value="25"></div>
+        <div class="field"><label for="cShip">Доставка на всю партию, ₽</label><input id="cShip" type="number" inputmode="decimal" value="0"></div>
+        <div class="field"><label for="cSell">Цена продажи, ₽</label><input id="cSell" type="number" inputmode="decimal" value="180"></div>
+        <div class="field"><label for="cChannel">Где продаём</label>
+          <select id="cChannel">
+            <option value="avito">Авито (бесплатное объявление)</option>
+            <option value="social">VK / Telegram</option>
+            <option value="offline">Знакомым, офлайн</option>
+            <option value="wb">Wildberries (~25% + логистика)</option>
+            <option value="ozon">Ozon (~20% + логистика)</option>
+          </select></div>
+        <div class="field"><label for="cST">Продастся, %</label><input id="cST" type="number" inputmode="decimal" value="50"></div>
+      </div>
+    </form>
+    <div class="panel">
+      <div class="result">
+        <span>Можно купить</span><b id="rUnits">—</b>
+        <span>Себестоимость партии</span><b id="rCost">—</b>
+        <span>Комиссии и логистика</span><b id="rFees">—</b>
+        <span>Выручка</span><b id="rRev">—</b>
+        <span><strong>Чистая прибыль</strong></span><b class="big" id="rProfit">—</b>
+        <span>Окупаемость (ROI)</span><b id="rRoi">—</b>
+        <span>Продать, чтобы выйти в ноль</span><b id="rBe">—</b>
+      </div>
+      <div class="verdict" id="rVerdict"></div>
+    </div>
+  </section>
+
+  <!-- ============ УЧЁТ ============ -->
+  <section class="view" id="v-log" hidden>
+    <div class="kpis">
+      <div class="kpi"><span>Потрачено</span><b id="lSpent">0</b></div>
+      <div class="kpi"><span>Продано на</span><b id="lEarned">0</b></div>
+      <div class="kpi"><span>Прибыль</span><b id="lProfit">0</b></div>
+    </div>
+    <form class="panel" id="logForm" autocomplete="off">
+      <h2>Новая запись</h2>
+      <div class="form">
+        <div class="field"><label for="lType">Тип</label><select id="lType"><option value="buy">Закупка</option><option value="sell">Продажа</option><option value="cost">Расход (упаковка, реклама)</option></select></div>
+        <div class="field"><label for="lAmount">Сумма, ₽</label><input id="lAmount" type="number" inputmode="decimal" placeholder="250" required></div>
+        <div class="field"><label for="lItem">Товар</label><input id="lItem" placeholder="Стёкла 9H" required></div>
+        <div class="field"><label for="lQty">Кол-во, шт</label><input id="lQty" type="number" inputmode="numeric" placeholder="10"></div>
+        <div class="field"><label for="lStart">Стартовый капитал, ₽</label><input id="lStart" type="number" inputmode="decimal" value="1000"></div>
+        <div class="field" style="justify-content:flex-end"><button class="btn" type="submit">Добавить</button></div>
+      </div>
+    </form>
+    <div class="panel">
+      <div class="row between"><h2>История</h2><button class="linkbtn" id="clearLog" type="button">Очистить</button></div>
+      <div id="logBox"></div>
+    </div>
+  </section>
+
+  <!-- ============ ГАЙД ============ -->
+  <section class="view" id="v-guide" hidden>
+    <details open>
+      <summary>Где покупать в Китае на 1000 ₽</summary>
+      <div class="body">
+        <ul>
+          <li><b>AliExpress</b>. Главная площадка для маленьких заказов. Раздел Choice даёт бесплатную доставку от небольшой суммы, срок 10–20 дней. Берите лоты «10 шт», «20 шт», так дешевле за штуку.</li>
+          <li><b>Ozon и Wildberries, товары «из Китая»</b>. Часто дешевле AliExpress, доставка в обычный ПВЗ за 10–25 дней, оплата картой РФ, удобный возврат. Сравнивайте цены на обеих площадках.</li>
+          <li><b>1688, Taobao, Pinduoduo</b>. Самые низкие цены, но нужен посредник или карго, минимальный заказ обычно от 10–30 тыс. ₽ и оплата доставки за килограмм. Это следующий этап, когда капитал вырастет.</li>
+        </ul>
+        <p class="muted">Как выбрать продавца: рейтинг от 4,8, больше 1000 отзывов, фото от покупателей, не самая низкая цена в выдаче (там чаще брак).</p>
+      </div>
+    </details>
+    <details>
+      <summary>Где продавать в России</summary>
+      <div class="body">
+        <ul>
+          <li><b>Авито</b>. Основной канал для старта: покупатели в вашем городе, объявление бесплатное в пределах лимита категории, есть Авито Доставка за счёт покупателя.</li>
+          <li><b>VK и Telegram</b>. Барахолки района, чаты школы, вуза, ЖК. Бесплатно, работают предзаказы.</li>
+          <li><b>Офлайн</b>. Одноклассники, коллеги, знакомые. Самые быстрые первые продажи без комиссий.</li>
+          <li><b>Wildberries и Ozon как продавец</b>. Только когда оборот от 20–30 тыс. ₽: комиссия 15–30%, логистика за каждую единицу, нужен статус самозанятого или ИП, для некоторых товаров обязательна маркировка «Честный знак».</li>
+        </ul>
+      </div>
+    </details>
+    <details>
+      <summary>Что нельзя продавать</summary>
+      <div class="body">
+        <ul>
+          <li><b>Подделки брендов</b>: реплики кроссовок, сумок, фальшивые Labubu, AirPods. Это нарушение закона о товарных знаках (ст. 14.10 КоАП, при крупном ущербе ст. 180 УК), товар изымают, на Авито блокируют аккаунт.</li>
+          <li>Товары, для которых нужна маркировка или сертификация, если у вас её нет: обувь, одежда для маркетплейсов, парфюм, детские игрушки для маркетплейсов, косметика.</li>
+          <li>Электронику с аккумуляторами на старте: много брака и возвратов.</li>
+        </ul>
+      </div>
+    </details>
+    <details>
+      <summary>Налоги и законность</summary>
+      <div class="body">
+        <p>Если продаёте регулярно, оформите самозанятость в приложении «Мой налог»: регистрация за 10 минут и бесплатно, налог 4% с продаж физлицам. Самозанятым можно стать с 16 лет, с 14 лет нужно согласие родителей.</p>
+        <p class="muted">Пошлина на ввоз для таких маленьких заказов не возникает: личные посылки до порога беспошлинного ввоза. Порог меняется, проверяйте актуальный на сайте ФТС, если заказы станут крупнее.</p>
+      </div>
+    </details>
+    <details>
+      <summary>Как не прогореть</summary>
+      <div class="body">
+        <ul>
+          <li>Не вкладывайте все деньги в один товар.</li>
+          <li>Сначала проверьте спрос: выставьте объявление с фото продавца до заказа и посмотрите, будут ли просмотры и сообщения.</li>
+          <li>Товар, который не продаётся 2 недели, продавайте по себестоимости и не докупайте.</li>
+          <li>На Авито не переходите в мессенджеры по просьбе «покупателя» и не открывайте ссылки на «оплату»: это главный вид мошенничества.</li>
+          <li>Записывайте все траты, включая упаковку. Без учёта легко «заработать» в минус.</li>
+        </ul>
+      </div>
+    </details>
+  </section>
+</div>
+
+<nav class="tabs" aria-label="Разделы">
+  <div class="in">
+    <a href="#analiz" data-v="analiz"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Анализ</a>
+    <a href="#plan" data-v="plan"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6 6"/></svg>План</a>
+    <a href="#calc" data-v="calc"><svg viewBox="0 0 24 24"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><path d="M8 7h8M8.5 12h.01M12 12h.01M15.5 12h.01M8.5 16h.01M12 16h.01M15.5 16h.01"/></svg>Расчёт</a>
+    <a href="#log" data-v="log"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/></svg>Учёт</a>
+    <a href="#guide" data-v="guide"><svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5M8 7h7"/></svg>Гайд</a>
+  </div>
+</nav>
+
+<script>
+(function(){
+"use strict";
+// ---------- ДАННЫЕ РЫНКА (оценки, ноябрь 2026; цены с доставкой до ПВЗ) ----------
+// buy — цена за штуку в Китае, sell — средняя цена продажи на Авито/в соцсетях,
+// demand/comp/risk — 1..5, days — сколько дней уходит партия в среднем городе.
+const PRODUCTS = [
+ {id:"glass",name:"Защитные стёкла 9H для смартфонов",cat:"Аксессуары",buy:25,sell:180,lot:10,demand:5,comp:4,risk:2,days:14,
+  buyAt:"AliExpress, лоты 10–20 шт; Ozon «из Китая»",sellAt:"Авито, чаты района, одноклассники",
+  tip:"Продавайте вместе с поклейкой за 300 ₽. Услуга убирает конкуренцию с маркетплейсами. Берите на самые популярные модели: iPhone 13–16, Samsung A-серии, Redmi Note."},
+ {id:"jewel",name:"Кольца и серьги из нержавеющей стали",cat:"Бижутерия",buy:30,sell:220,lot:10,demand:4,comp:3,risk:1,days:18,
+  buyAt:"AliExpress, Ozon «из Китая» (ищите «316L stainless»)",sellAt:"Авито, Telegram, офлайн, подарки к праздникам",
+  tip:"Нержавейка не темнеет и не зеленит кожу, это главный аргумент в объявлении. Подарочный мешочек за 5 ₽ поднимает цену на 50–100 ₽."},
+ {id:"claw",name:"Заколки-крабы и резинки наборами",cat:"Аксессуары для волос",buy:12,sell:100,lot:20,demand:4,comp:3,risk:1,days:16,
+  buyAt:"AliExpress, Wildberries «из Китая»",sellAt:"Авито, школа, колледж, VK",
+  tip:"Продавайте наборами по 3 шт за 300 ₽. Матовые и «мраморные» расцветки уходят быстрее ярких."},
+ {id:"cases",name:"Силиконовые чехлы для iPhone",cat:"Аксессуары",buy:70,sell:350,lot:5,demand:5,comp:5,risk:3,days:20,
+  buyAt:"AliExpress, Ozon «из Китая»",sellAt:"Авито, Telegram",
+  tip:"Конкуренция высокая. Выигрывают чехлы с MagSafe и прозрачные противоударные. Не заказывайте редкие модели."},
+ {id:"stickers",name:"Стикерпаки (50 наклеек)",cat:"Канцелярия",buy:35,sell:200,lot:10,demand:3,comp:2,risk:1,days:21,
+  buyAt:"AliExpress",sellAt:"Школы, VK, Telegram, ярмарки",
+  tip:"Хорошо продаются тематические наборы: аниме, игры, мемы. Лёгкие, легко отправить по почте."},
+ {id:"cable",name:"Кабели USB-C / Lightning в оплётке",cat:"Электроника",buy:60,sell:300,lot:5,demand:4,comp:4,risk:3,days:18,
+  buyAt:"AliExpress (продавцы с 4,9★)",sellAt:"Авито, знакомые",
+  tip:"Проверьте каждый кабель на зарядку перед продажей. Обещайте замену в течение недели, это снимает страх покупателя."},
+ {id:"plush",name:"Плюшевые брелоки (без логотипов брендов)",cat:"Игрушки",buy:80,sell:350,lot:5,demand:4,comp:4,risk:3,days:20,
+  buyAt:"AliExpress, Ozon «из Китая»",sellAt:"Авито, Telegram, офлайн",
+  tip:"Спрос держится на трендах и быстро меняется. Берите небольшую партию и только оригинальные дизайны, копии известных персонажей нельзя."},
+ {id:"led",name:"LED-лента USB 3 м с пультом",cat:"Декор",buy:150,sell:550,lot:3,demand:3,comp:4,risk:2,days:21,
+  buyAt:"AliExpress, Wildberries «из Китая»",sellAt:"Авито, VK",
+  tip:"Покажите в объявлении видео в тёмной комнате. Хорошо уходит перед Новым годом."},
+ {id:"socks",name:"Носки с принтами",cat:"Одежда",buy:35,sell:150,lot:10,demand:3,comp:3,risk:2,days:24,
+  buyAt:"AliExpress",sellAt:"Офлайн, подарочные наборы на праздники",
+  tip:"Продаются наборами 3–5 пар в подарочной упаковке, особенно к 23 февраля и Новому году."},
+ {id:"tws",name:"Беспроводные наушники noname",cat:"Электроника",buy:450,sell:1000,lot:1,demand:3,comp:5,risk:5,days:25,
+  buyAt:"Не рекомендуем на старте",sellAt:"—",warn:true,
+  tip:"Весь бюджет уходит на 2 штуки, много брака и возвратов, покупатели сравнивают с маркетплейсами. Вернитесь к этому позже."},
+ {id:"fake",name:"Реплики брендов (кроссовки, Labubu, AirPods)",cat:"Запрещено",buy:300,sell:1200,lot:1,demand:5,comp:5,risk:5,days:10,
+  buyAt:"Не покупать",sellAt:"Не продавать",banned:true,
+  tip:"Продажа подделок нарушает закон о товарных знаках: штраф и изъятие по ст. 14.10 КоАП, блокировка на Авито. Высокая наценка этого не стоит."}
+];
+
+const CHANNELS = { avito:{pct:0,fix:0}, social:{pct:0,fix:0}, offline:{pct:0,fix:0}, wb:{pct:.25,fix:80}, ozon:{pct:.20,fix:70} };
+const PLAN = [ {id:"glass",qty:10}, {id:"jewel",qty:10}, {id:"claw",qty:20} ];
+const PLAN_COLORS = ["var(--accent)","var(--good)","var(--warn)"];
+const RESERVE_COLOR = "var(--muted)";
+
+const $ = s => document.querySelector(s);
+const fmt = n => (Math.round(n)).toLocaleString("ru-RU").replace(/,/g," ") + " ₽";
+const byId = id => PRODUCTS.find(p=>p.id===id);
+const store = {
+  get(k,d){ try{ const v=localStorage.getItem("perekup:"+k); return v==null?d:JSON.parse(v);}catch(e){return d;} },
+  set(k,v){ try{ localStorage.setItem("perekup:"+k, JSON.stringify(v)); }catch(e){} }
+};
+
+// ---------- СКОРИНГ ----------
+function roi(p){ return (p.sell - p.buy)/p.buy; }
+function score(p){
+  if(p.banned) return 0;
+  const r = Math.min(roi(p),8)/8;          // наценка до 800%
+  const s = r*35 + p.demand*7 + (6-p.comp)*4 + (6-p.risk)*5 + Math.max(0,30-p.days)*0.5;
+  return Math.round(Math.min(100, s*100/115) * (p.warn?0.55:1));
+}
+function riskPill(p){
+  if(p.banned) return '<span class="pill bad">Запрещено</span>';
+  if(p.warn) return '<span class="pill bad">Не для старта</span>';
+  return p.risk<=1?'<span class="pill good">Риск низкий</span>':p.risk<=2?'<span class="pill good">Риск умеренный</span>':'<span class="pill warn">Риск средний</span>';
+}
+function compPill(p){ return p.comp>=5?'<span class="pill warn">Высокая конкуренция</span>':p.comp<=2?'<span class="pill good">Мало конкурентов</span>':'<span class="pill">Конкуренция средняя</span>'; }
+
+let sortMode = store.get("sort","score");
+function renderProducts(){
+  const list = PRODUCTS.slice();
+  const cmp = {
+    score:(a,b)=>score(b)-score(a),
+    roi:(a,b)=>(b.banned-a.banned)||roi(b)-roi(a),
+    risk:(a,b)=>a.risk-b.risk||score(b)-score(a),
+    speed:(a,b)=>a.days-b.days||score(b)-score(a)
+  }[sortMode];
+  list.sort(cmp);
+  // запрещённое и нерекомендуемое — всегда внизу
+  list.sort((a,b)=>(a.banned?2:a.warn?1:0)-(b.banned?2:b.warn?1:0));
+  let rank=0;
+  $("#productList").innerHTML = list.map(p=>{
+    const r = p.banned||p.warn ? "!" : ++rank;
+    const units = Math.floor(1000/p.buy);
+    return `<article class="card${p.banned?" banned":""}">
+      <div class="card-head">
+        <div class="rank" ${p.banned||p.warn?'style="background:var(--bad-soft);color:var(--bad)"':""}>${r}</div>
+        <div><h3>${p.name}</h3><div class="muted" style="font-size:12px">${p.cat}</div></div>
+        <div class="score">${p.banned?"—":score(p)}<small>балл</small></div>
+      </div>
+      <div class="nums">
+        <div><span>Купить</span><b>${p.buy} ₽</b></div>
+        <div><span>Продать</span><b>${p.sell} ₽</b></div>
+        <div><span>Наценка</span><b>${Math.round(roi(p)*100)}%</b></div>
+        <div><span>Продажа</span><b>~${p.days} дн</b></div>
+      </div>
+      <div class="pills">${riskPill(p)}${compPill(p)}${p.banned?"":`<span class="pill">На 1000 ₽: ${units} шт</span>`}</div>
+      <dl class="where"><dt>Где купить</dt><dd>${p.buyAt}</dd><dt>Где продать</dt><dd>${p.sellAt}</dd></dl>
+      <p class="tip">${p.tip}</p>
+      ${p.banned?"":`<button class="linkbtn" data-calc="${p.id}">Пересчитать со своими ценами →</button>`}
+    </article>`;
+  }).join("");
+}
+document.querySelectorAll("[data-sort]").forEach(b=>b.addEventListener("click",()=>{
+  sortMode=b.dataset.sort; store.set("sort",sortMode);
+  document.querySelectorAll("[data-sort]").forEach(x=>x.setAttribute("aria-pressed",x===b));
+  renderProducts();
+}));
+document.querySelectorAll("[data-sort]").forEach(x=>x.setAttribute("aria-pressed",x.dataset.sort===sortMode));
+$("#productList").addEventListener("click",e=>{
+  const id = e.target.closest("[data-calc]")?.dataset.calc; if(!id) return;
+  const p=byId(id);
+  $("#cName").value=p.name; $("#cBuy").value=p.buy; $("#cSell").value=p.sell; $("#cShip").value=0; $("#cChannel").value="avito";
+  calc(); location.hash="calc";
+});
+
+// ---------- ПЛАН ----------
+function planNumbers(st){
+  let spent=0, rev=0, days=0;
+  const rows = PLAN.map((x,i)=>{ const p=byId(x.id); const cost=p.buy*x.qty; spent+=cost; rev+=p.sell*x.qty*st; days=Math.max(days,p.days); return {p,qty:x.qty,cost,color:PLAN_COLORS[i]}; });
+  const reserve = 1000 - spent;
+  const packaging = (PLAN.reduce((a,x)=>a+x.qty,0))*3; // ~3 ₽ пакет/упаковка на шт
+  return {rows,spent,reserve,rev,profit:rev-spent-packaging,days:days+18}; // +18 дн доставка
+}
+function renderPlan(){
+  const st = Number($("#sellThrough").value)/100;
+  $("#stVal").textContent = Math.round(st*100)+"%"; $("#stLabel").textContent = Math.round(st*100);
+  const n = planNumbers(st);
+  $("#planTotal").textContent = fmt(1000);
+  $("#allocBar").innerHTML = n.rows.map(r=>`<i style="width:${r.cost/10}%;background:${r.color}"></i>`).join("") + `<i style="width:${n.reserve/10}%;background:${RESERVE_COLOR};opacity:.35"></i>`;
+  $("#allocLegend").innerHTML = n.rows.map(r=>`<div class="li"><span class="sw" style="background:${r.color}"></span><span>${r.p.name}<br><span class="muted" style="font-size:12px">${r.qty} шт × ${r.p.buy} ₽ → продаём по ${r.p.sell} ₽</span></span><b class="mono">${fmt(r.cost)}</b></div>`).join("")
+    + `<div class="li"><span class="sw" style="background:${RESERVE_COLOR};opacity:.35"></span><span>Резерв: упаковка, пакеты, брак<br><span class="muted" style="font-size:12px">не тратьте его на товар</span></span><b class="mono">${fmt(n.reserve)}</b></div>`;
+  $("#kRev").textContent = fmt(n.rev);
+  $("#kProfit").textContent = (n.profit>=0?"+":"")+fmt(n.profit);
+  $("#kProfit").className = n.profit>=0?"pos":"";
+  $("#kDays").textContent = n.days+" дн";
+  // реинвест: капитал растёт на чистую доходность цикла, со снижением по мере насыщения рынка
+  // прибыль цикла = min(капитал × доходность, ёмкость рынка); ёмкость растёт на 40% за цикл
+  const rate = n.profit/n.spent, p1 = Math.max(0,n.profit)*0.9;
+  let cap=1000; const caps=[cap];
+  for(let i=1;i<6;i++){ cap += Math.max(-cap, Math.min(cap*rate*0.9, p1*Math.pow(1.4,i-1))); caps.push(cap); }
+  const max=Math.max(...caps);
+  $("#bars").innerHTML = caps.map(c=>`<div class="bar" style="height:${Math.max(3,c/max*100)}%"><em>${c>=10000?(c/1000).toFixed(1).replace(".",",")+"к":Math.round(c).toLocaleString("ru-RU")}</em></div>`).join("");
+  $("#barLabels").innerHTML = caps.map((c,i)=>`<span>${i===0?"старт":"цикл "+i}</span>`).join("");
+}
+$("#sellThrough").addEventListener("input",renderPlan);
+
+// ---------- КАЛЬКУЛЯТОР ----------
+function num(id){ const v=parseFloat(String($(id).value).replace(",",".")); return isFinite(v)?v:0; }
+function calc(){
+  const budget=num("#cBudget"), buy=num("#cBuy"), ship=num("#cShip"), sell=num("#cSell"), st=Math.min(100,Math.max(0,num("#cST")))/100;
+  const ch = CHANNELS[$("#cChannel").value];
+  const units = buy>0 ? Math.floor(Math.max(0,budget-ship)/buy) : 0;
+  const cost = units*buy + ship;
+  const sold = Math.floor(units*st);
+  const fees = sold*(sell*ch.pct + ch.fix);
+  const rev = sold*sell;
+  const profit = rev - fees - cost;
+  const netPerUnit = sell*(1-ch.pct) - ch.fix;
+  const be = netPerUnit>0 ? Math.ceil(cost/netPerUnit) : Infinity;
+  $("#rUnits").textContent = units+" шт";
+  $("#rCost").textContent = fmt(cost);
+  $("#rFees").textContent = fmt(fees);
+  $("#rRev").textContent = fmt(rev)+` (${sold} шт)`;
+  $("#rProfit").textContent = (profit>=0?"+":"")+fmt(profit);
+  $("#rProfit").style.color = profit>=0?"var(--good)":"var(--bad)";
+  $("#rRoi").textContent = cost>0? Math.round(profit/cost*100)+"%" : "—";
+  $("#rBe").textContent = isFinite(be)? `${be} из ${units} шт` : "никогда";
+  const v=$("#rVerdict");
+  const r = cost>0?profit/cost:0;
+  if(units===0){ v.textContent="Бюджета не хватает даже на одну штуку."; v.style.background="var(--bad-soft)"; v.style.color="var(--bad)"; }
+  else if(!isFinite(be)||be>units){ v.textContent="Убыточно: даже если продать всё, не выйдете в ноль. Поднимите цену или смените канал продаж."; v.style.background="var(--bad-soft)"; v.style.color="var(--bad)"; }
+  else if(r<0.5){ v.textContent="Слабо: прибыль меньше 50% от вложений. Риски брака и непроданных остатков съедят заработок."; v.style.background="var(--warn-soft)"; v.style.color="var(--warn)"; }
+  else { v.textContent=`Хороший вариант: в ноль выходите после ${be} проданных шт, остальное — прибыль.`; v.style.background="var(--good-soft)"; v.style.color="var(--good)"; }
+}
+$("#calcForm").addEventListener("input",calc);
+$("#calcForm").addEventListener("submit",e=>e.preventDefault());
+
+// ---------- УЧЁТ ----------
+let log = store.get("log",null);
+let isSample = false;
+if(!Array.isArray(log)){ // пример, чтобы было видно, как работает
+  isSample = true;
+  log = [
+    {t:"buy",item:"Стёкла 9H (пример)",qty:10,amount:250,d:"2026-11-01"},
+    {t:"sell",item:"Стёкла 9H (пример)",qty:2,amount:500,d:"2026-11-03"}
+  ];
+}
+$("#lStart").value = store.get("start",1000);
+function renderLog(){
+  const start = num("#lStart");
+  let spent=0, earned=0;
+  log.forEach(x=>{ if(x.t==="sell") earned+=x.amount; else spent+=x.amount; });
+  $("#lSpent").textContent=fmt(spent); $("#lEarned").textContent=fmt(earned);
+  const pr=earned-spent; $("#lProfit").textContent=(pr>=0?"+":"")+fmt(pr); $("#lProfit").className=pr>=0?"pos":"";
+  $("#walletVal").textContent = fmt(isSample ? start : start - spent + earned);
+  if(!log.length){ $("#logBox").innerHTML='<div class="empty">Пока пусто. Добавьте первую закупку выше: товар, количество и сумму.</div>'; return; }
+  const label={buy:"Закупка",sell:"Продажа",cost:"Расход"};
+  $("#logBox").innerHTML = (isSample?'<p class="muted" style="font-size:12px;margin-bottom:8px">Это пример. Первая ваша запись его заменит.</p>':"")+
+   `<div class="tablebox"><table><thead><tr><th>Дата</th><th>Запись</th><th style="text-align:right">Сумма</th><th></th></tr></thead><tbody>`+
+   log.map((x,i)=>`<tr><td class="mono" style="font-size:12px;white-space:nowrap">${x.d.slice(8,10)}.${x.d.slice(5,7)}</td><td>${label[x.t]}: ${esc(x.item)}${x.qty?` <span class="muted">× ${x.qty}</span>`:""}</td><td class="n" style="color:${x.t==="sell"?"var(--good)":"var(--ink)"}">${x.t==="sell"?"+":"−"}${fmt(x.amount)}</td><td><button class="x" data-del="${i}" aria-label="Удалить запись">×</button></td></tr>`).reverse().join("")+
+   `</tbody></table></div>`;
+}
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+$("#logForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  const amount=num("#lAmount"); const item=$("#lItem").value.trim(); if(!amount||!item) return;
+  if(isSample){ log=[]; isSample=false; }
+  log.push({t:$("#lType").value,item,qty:Math.round(num("#lQty"))||0,amount,d:new Date().toISOString().slice(0,10)});
+  store.set("log",log); $("#lAmount").value=""; $("#lQty").value=""; renderLog();
+});
+$("#lStart").addEventListener("input",()=>{ store.set("start",num("#lStart")); renderLog(); });
+$("#logBox").addEventListener("click",e=>{
+  const i=e.target.closest("[data-del]")?.dataset.del; if(i==null) return;
+  if(isSample){ log=[]; isSample=false; } else log.splice(Number(i),1);
+  store.set("log",log); renderLog();
+});
+let clearArmed=false;
+$("#clearLog").addEventListener("click",e=>{
+  if(!clearArmed){ clearArmed=true; e.target.textContent="Точно удалить всё?"; setTimeout(()=>{clearArmed=false;e.target.textContent="Очистить";},3000); return; }
+  log=[]; isSample=false; store.set("log",log); clearArmed=false; e.target.textContent="Очистить"; renderLog();
+});
+
+// ---------- НАВИГАЦИЯ ----------
+const TITLES={analiz:"Анализ рынка",plan:"План на 1000 ₽",calc:"Калькулятор",log:"Учёт продаж",guide:"Гайд перекупа"};
+function route(){
+  const v = (location.hash||"#analiz").slice(1); const key = TITLES[v]?v:"analiz";
+  Object.keys(TITLES).forEach(k=>{ $("#v-"+k).hidden = k!==key; });
+  document.querySelectorAll("nav.tabs a").forEach(a=>{ if(a.dataset.v===key) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
+  $("#viewTitle").textContent = TITLES[key];
+  window.scrollTo(0,0);
+}
+window.addEventListener("hashchange",route);
+
+renderProducts(); renderPlan(); calc(); renderLog(); route();
+})();
+</script>
+
+<script>if("serviceWorker" in navigator){addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}</script>
+</body>
+</html>
